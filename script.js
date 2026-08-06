@@ -25,6 +25,7 @@ const $ = (id) => document.getElementById(id);
 
 const elements = {
   segmentNav: $("segmentNav"),
+  segmentApply: $("segmentApply"),
   segmentInputs: $("segmentInputs"),
   drawingCanvas: $("drawingCanvas"),
   selectedSegmentDetail: $("selectedSegmentDetail"),
@@ -52,6 +53,7 @@ const elements = {
 };
 
 let state = loadState();
+let segmentApplyMessage = "";
 
 function createDefaultSegment(id) {
   return {
@@ -467,6 +469,52 @@ function renderSegmentNav(layout) {
   `;
 }
 
+function getCopyTargetSegments() {
+  return state.segments.filter((segment) => segment.id !== "A");
+}
+
+function getSegmentActualMm(layout, segmentId) {
+  const segment = layout.segments.find((item) => item.id === segmentId);
+  return segment && Number.isFinite(segment.actualMm) ? segment.actualMm : 0;
+}
+
+function renderSegmentApply(layout) {
+  if (!elements.segmentApply) return;
+  const targetSegments = getCopyTargetSegments();
+  const aComplete = getSegmentActualMm(layout, "A") > 0;
+  if (!targetSegments.length || !aComplete) {
+    elements.segmentApply.innerHTML = segmentApplyMessage
+      ? `<p class="segment-apply-status">${escapeHtml(segmentApplyMessage)}</p>`
+      : "";
+    return;
+  }
+
+  elements.segmentApply.innerHTML = `
+    <button id="applySegmentAButton" class="segment-apply-button" type="button">A辺の条件を他の辺にも適用</button>
+    ${segmentApplyMessage ? `<p class="segment-apply-status">${escapeHtml(segmentApplyMessage)}</p>` : ""}
+  `;
+}
+
+function copyFenceSettingsFromSegmentA(layout) {
+  const source = state.segments.find((segment) => segment.id === "A");
+  const targets = getCopyTargetSegments();
+  if (!source || !targets.length || getSegmentActualMm(layout, "A") <= 0) return;
+
+  const hasCompletedTarget = targets.some((segment) => getSegmentActualMm(layout, segment.id) > 0);
+  if (hasCompletedTarget && !window.confirm("入力済みの辺を上書きしますか？")) return;
+
+  targets.forEach((segment) => {
+    segment.mode = source.mode;
+    segment.targetMm = source.targetMm;
+    segment.adoptedProposal = source.adoptedProposal;
+    segment.panels = source.panels.map((panel) => ({ sku: panel.sku, qty: panel.qty }));
+  });
+
+  const targetLabel = targets.map((segment) => segment.id).join("・");
+  segmentApplyMessage = `A辺の条件を${targetLabel}辺へ適用しました`;
+  render();
+}
+
 function renderSegmentInputs(layout) {
   elements.segmentInputs.innerHTML = state.segments.map((segment) => {
     const estimatedSegment = layout.segments.find((item) => item.id === segment.id);
@@ -539,6 +587,7 @@ function selectSegment(segmentId) {
 function updateSegmentField(segmentId, field, value) {
   const segment = state.segments.find((item) => item.id === segmentId);
   if (!segment) return;
+  segmentApplyMessage = "";
 
   if (field === "mode") {
     segment.mode = value === "manual" ? "manual" : "auto";
@@ -596,9 +645,16 @@ function handleSegmentNavKeydown(event) {
   selectSegment(item.dataset.navSegment);
 }
 
+function handleSegmentApplyClick(event) {
+  const button = event.target.closest("#applySegmentAButton");
+  if (!button) return;
+  copyFenceSettingsFromSegmentA(calculateLayout());
+}
+
 function updateShape(shape) {
   const currentById = new Map(state.segments.map((segment) => [segment.id, segment]));
   const count = getShapeSegmentCount(shape);
+  segmentApplyMessage = "";
   state.shape = shape;
   state.segments = Array.from({ length: count }, (_, index) => {
     const id = getSegmentId(index);
@@ -1104,6 +1160,7 @@ function render() {
 
   syncShapeButtons();
   renderSegmentNav(layout);
+  renderSegmentApply(layout);
   renderSegmentInputs(layout);
   renderDrawing(layout);
   renderSelectedSegmentDetail(layout);
@@ -1127,6 +1184,9 @@ function setupInputs() {
   if (elements.segmentNav) {
     elements.segmentNav.addEventListener("click", handleSegmentNavClick);
     elements.segmentNav.addEventListener("keydown", handleSegmentNavKeydown);
+  }
+  if (elements.segmentApply) {
+    elements.segmentApply.addEventListener("click", handleSegmentApplyClick);
   }
   elements.segmentInputs.addEventListener("input", handleSegmentInput);
   elements.segmentInputs.addEventListener("change", handleSegmentInput);

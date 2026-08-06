@@ -473,6 +473,41 @@ h2 {
   stroke-width: 7px;
 }
 
+.segment-apply {
+  display: grid;
+  gap: 6px;
+  margin: 0 0 8px;
+}
+
+.segment-apply:empty {
+  display: none;
+}
+
+.segment-apply-button {
+  min-height: 46px;
+  border: 1px solid rgba(14, 110, 68, 0.25);
+  border-radius: 14px;
+  background: #ffffff;
+  color: var(--accent-dark);
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.segment-apply-button:active {
+  transform: translateY(1px);
+}
+
+.segment-apply-status {
+  margin: 0;
+  border-radius: 12px;
+  background: var(--accent-soft);
+  padding: 9px 12px;
+  color: var(--accent-dark);
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1.35;
+}
+
 .segment-input-card {
   display: grid;
   gap: 10px;
