@@ -1052,9 +1052,20 @@ function getOppositeDimensionDifferences(layout) {
     const first = segmentById.get(pair[0]);
     const second = segmentById.get(pair[1]);
     if (!first || !second || first.actualMm <= 0 || second.actualMm <= 0) return items;
+    const firstHasGate = first.gates.length > 0;
+    const secondHasGate = second.gates.length > 0;
+    if (firstHasGate === secondHasGate) return items;
     const differenceMm = Math.abs(first.actualMm - second.actualMm);
     if (differenceMm <= 0) return items;
-    items.push({ firstId: pair[0], secondId: pair[1], differenceMm });
+    const gateSegment = firstHasGate ? first : second;
+    const panelSegment = firstHasGate ? second : first;
+    const relation = gateSegment.actualMm < panelSegment.actualMm ? "短く" : "長く";
+    items.push({
+      gateSegmentId: gateSegment.id,
+      panelSegmentId: panelSegment.id,
+      differenceMm,
+      relation
+    });
     return items;
   }, []);
 }
@@ -1071,7 +1082,7 @@ function renderOppositeDimensionNotice(layout) {
     <div class="opposite-dimension-box">
       <strong>設置寸法について</strong>
       ${differences.map((item) => `
-        <p>対面する${item.firstId}辺と${item.secondId}辺で、設置寸法に約${item.differenceMm.toLocaleString("ja-JP")}mmの差があります。<br>既存の土間・塀・建物などに沿わせて設置する場合は、寸法をご確認ください。</p>
+        <p>${item.gateSegmentId}辺は門扉を含む構成のため、通常パネルのみの${item.panelSegmentId}辺より設置寸法が約${item.differenceMm.toLocaleString("ja-JP")}mm${item.relation}なっています。（商品規格上）<br>既存の土間・塀・建物などに沿わせて設置する場合は、寸法をご確認ください。</p>
       `).join("")}
     </div>
   `;
