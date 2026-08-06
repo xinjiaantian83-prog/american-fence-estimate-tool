@@ -321,6 +321,82 @@ h2 {
   padding: 22px;
 }
 
+.order-flow-card {
+  padding: 16px 16px 14px;
+}
+
+.order-flow-head {
+  margin-bottom: 8px;
+}
+
+.order-flow-head h2 {
+  font-size: 21px;
+}
+
+.order-flow-head p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+.order-flow-list {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.order-flow-list li {
+  position: relative;
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr);
+  gap: 8px;
+  padding: 5px 0;
+}
+
+.order-flow-list li:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  left: 17px;
+  top: 32px;
+  bottom: -5px;
+  width: 1px;
+  background: #c9ddd1;
+}
+
+.order-flow-list span {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 24px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.order-flow-list strong {
+  display: block;
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.25;
+}
+
+.order-flow-list p {
+  margin: 1px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
 .section-head {
   margin-bottom: 14px;
 }
