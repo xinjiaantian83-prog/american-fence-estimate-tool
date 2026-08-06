@@ -28,12 +28,11 @@ const elements = {
   drawingCanvas: $("drawingCanvas"),
   selectedSegmentDetail: $("selectedSegmentDetail"),
   customerTotalTaxIn: $("customerTotalTaxIn"),
-  customerTotal: $("customerTotal"),
-  listTotal: $("listTotal"),
-  costTotal: $("costTotal"),
-  profit: $("profit"),
-  profitRate: $("profitRate"),
+  shippingButton: $("shippingButton"),
+  shippingStatus: $("shippingStatus"),
+  partsSummary: $("partsSummary"),
   partsList: $("partsList"),
+  noticeList: $("noticeList"),
   replyText: $("replyText"),
   copyButton: $("copyButton"),
   copyStatus: $("copyStatus"),
@@ -74,6 +73,15 @@ function yenMark(value) {
 function percent(value) {
   if (!Number.isFinite(value)) return "0.0%";
   return `${value.toFixed(1)}%`;
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }
 
 function sanitizeCount(value) {
@@ -840,10 +848,11 @@ function renderSelectedSegmentDetail(layout) {
     : "<li>パネルなし</li>";
   const gateLine = segment.gates.length ? `<li>門扉 × ${segment.gates.length}</li>` : "";
   const diff = segment.differenceMm === 0 ? "差なし" : `${segment.differenceMm > 0 ? "+" : ""}${segment.differenceMm.toLocaleString("ja-JP")}mm`;
-  const warningLines = segment.warnings.length
+  const warningMessages = getCustomerWarnings({ ...layout, warnings: segment.warnings }, segment);
+  const warningLines = warningMessages.length
     ? `
       <div class="segment-warnings" role="alert">
-        ${segment.warnings.map((warning) => `<p>${warning.message}</p>`).join("")}
+        ${warningMessages.map((message) => `<p>${escapeHtml(message)}</p>`).join("")}
       </div>
     `
     : "";
@@ -854,7 +863,7 @@ function renderSelectedSegmentDetail(layout) {
       <ul>
         ${panelLines}
         ${gateLine}
-        <li>標準設置幅 約${segment.actualMm.toLocaleString("ja-JP")}mm</li>
+        <li>設置時の幅目安 約${segment.actualMm.toLocaleString("ja-JP")}mm</li>
         <li>希望寸法との差 ${diff}</li>
         <li>柱 ${segment.posts}本</li>
         <li>ジョイント ${segment.joints}個</li>
@@ -864,17 +873,24 @@ function renderSelectedSegmentDetail(layout) {
   `;
 }
 
+function isGateRelatedItem(item) {
+  const name = item.name || "";
+  return item.category === "gate" || item.sku === "hinge" || item.sku === "latch" || name.includes("門扉") || name.includes("ヒンジ") || name.includes("ラッチ");
+}
+
 function renderParts(layout) {
+  const itemCount = layout.items.length;
+  elements.partsSummary.textContent = itemCount > 0 ? `部材一覧を見る（${itemCount}品目）` : "部材一覧を見る";
   elements.partsList.innerHTML = layout.items.map((item) => {
-    const product = PRODUCT_MASTER[item.sku];
-    const costAmount = product ? product.costPrice * item.qty : 0;
+    const segmentLabel = item.segmentIds && item.segmentIds.length ? `${item.segmentIds.join("・")}辺` : "全体";
+    const gateNote = isGateRelatedItem(item) ? '<span class="parts-note parts-gate-note">門扉用</span>' : "";
+    const customerSubtotalTaxIn = Math.round(item.subtotal * CUSTOMER_RATE * (1 + TAX_RATE));
     return `
       <div class="part-card">
-        <h3>${item.name}<small class="parts-note">${item.segmentIds.join("・")}辺</small></h3>
-        <div class="part-values">
+        <h3>${escapeHtml(item.name)}${gateNote}<small class="parts-note">対象辺：${escapeHtml(segmentLabel)}</small></h3>
+        <div class="part-values customer-part-values">
           <span><small>数量</small><strong>${item.qty.toLocaleString("ja-JP")}</strong></span>
-          <span><small>定価</small><strong>${yen(item.subtotal)}</strong></span>
-          <span><small>仕入</small><strong>${yen(costAmount)}</strong></span>
+          <span><small>税込小計</small><strong>${yen(customerSubtotalTaxIn)}</strong></span>
         </div>
       </div>
     `;
@@ -883,11 +899,46 @@ function renderParts(layout) {
 
 function renderPrice(price) {
   elements.customerTotalTaxIn.textContent = yenMark(price.customerTotalTaxIn);
-  elements.customerTotal.textContent = yen(price.customerTotal);
-  elements.listTotal.textContent = yen(price.listTotal);
-  elements.costTotal.textContent = yen(price.costTotal);
-  elements.profit.textContent = yen(price.profit);
-  elements.profitRate.textContent = percent(price.profitRate);
+}
+
+function getCustomerWarningMessage(warning, segment) {
+  const code = warning && warning.code;
+  const differenceMm = Number(warning && warning.differenceMm);
+  if (code === "LONGER_THAN_TARGET") {
+    const diff = Number.isFinite(differenceMm) ? Math.abs(differenceMm) : Math.abs(segment && segment.differenceMm);
+    return `ご希望寸法より約${diff.toLocaleString("ja-JP")}mm長くなります。`;
+  }
+  if (code === "SHORTER_THAN_TARGET") {
+    const diff = Number.isFinite(differenceMm) ? Math.abs(differenceMm) : Math.abs(segment && segment.differenceMm);
+    return `ご希望寸法より約${diff.toLocaleString("ja-JP")}mm短くなります。`;
+  }
+  if (code === "INVALID_GATE_POSITION") return "門扉の位置をもう一度ご確認ください。";
+  if (code === "EMPTY_MANUAL_CONFIGURATION") return "パネル枚数を入力してください。";
+  if (code === "NON_POSITIVE_DIMENSION") return "希望寸法を1mm以上で入力してください。";
+  if (code === "NO_AUTO_COMBINATION") return "この寸法に近い組み合わせが見つかりませんでした。";
+  if (code === "BOX_CLOSURE_MISMATCH") return "四角囲いの向かい合う辺の寸法をご確認ください。";
+  if (code === "SEGMENT_COUNT_MISMATCH") return "形状に対する辺の数をご確認ください。";
+  if (code === "UNSUPPORTED_SKU") return "選択中の部材を確認してください。";
+  return "入力内容をご確認ください。";
+}
+
+function getCustomerWarnings(layout, segment = null) {
+  const warnings = segment ? segment.warnings : layout.warnings;
+  const messages = warnings.map((warning) => getCustomerWarningMessage(warning, segment));
+  return Array.from(new Set(messages));
+}
+
+function renderNotices(layout) {
+  const messages = getCustomerWarnings(layout);
+  if (!messages.length) {
+    elements.noticeList.innerHTML = "";
+    return;
+  }
+  elements.noticeList.innerHTML = `
+    <div class="segment-warnings" role="alert">
+      ${messages.map((message) => `<p>${escapeHtml(message)}</p>`).join("")}
+    </div>
+  `;
 }
 
 function renderReply(price) {
@@ -910,6 +961,7 @@ function render() {
   renderSelectedSegmentDetail(layout);
   renderParts(layout);
   renderPrice(price);
+  renderNotices(layout);
   renderReply(price);
   saveState();
   elements.shareUrl.value = window.location.href;
@@ -931,6 +983,10 @@ function setupInputs() {
   elements.resetButton.addEventListener("click", () => {
     state = normalizeState(INITIAL_STATE);
     render();
+  });
+
+  elements.shippingButton.addEventListener("click", () => {
+    elements.shippingStatus.textContent = "送料・配送方法は設置地域と荷受け条件により変わります。LINE相談で確認してください。";
   });
 }
 

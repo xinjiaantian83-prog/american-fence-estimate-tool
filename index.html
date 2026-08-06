@@ -10,7 +10,7 @@
   <main class="app">
     <header class="hero">
       <h1>アメリカンフェンス概算見積</h1>
-      <p>材料販売価格をすばやく回答する内部ツール</p>
+      <p>設置寸法に合わせて材料一式の目安を確認できます。</p>
     </header>
 
     <section class="card input-card" aria-labelledby="inputTitle">
@@ -63,39 +63,26 @@
       <div id="selectedSegmentDetail" class="selected-segment-detail"></div>
     </section>
 
-    <section class="card" aria-labelledby="partsTitle">
-      <div class="section-head">
-        <h2 id="partsTitle">部材一覧</h2>
-      </div>
-      <div id="partsList" class="parts-list" aria-label="使用部材一覧"></div>
-      <p class="notice">表示価格はアメリカンフェンス材料のみの概算価格です。人工芝、基礎工事、フェンス設置費、その他施工費は含まれていません。</p>
-    </section>
-
     <section class="summary-grid" aria-label="価格">
       <article class="total-card">
-        <span>税込価格</span>
+        <span>材料一式（税込）</span>
         <strong id="customerTotalTaxIn">¥0</strong>
       </article>
-      <article class="metric-card">
-        <span>税別</span>
-        <strong id="customerTotal">0円</strong>
-      </article>
-      <article class="metric-card">
-        <span>粗利</span>
-        <strong id="profit">0円</strong>
-      </article>
-      <article class="metric-card">
-        <span>粗利率</span>
-        <strong id="profitRate">0.0%</strong>
-      </article>
-      <article class="metric-card">
-        <span>定価合計</span>
-        <strong id="listTotal">0円</strong>
-      </article>
-      <article class="metric-card">
-        <span>仕入合計</span>
-        <strong id="costTotal">0円</strong>
-      </article>
+    </section>
+
+    <section class="card action-card" aria-labelledby="shippingTitle">
+      <div class="section-head">
+        <h2 id="shippingTitle">送料・配送方法</h2>
+      </div>
+      <button id="shippingButton" class="ghost-button full-button" type="button">送料・配送方法を確認する</button>
+      <p id="shippingStatus" class="copy-status" role="status" aria-live="polite"></p>
+    </section>
+
+    <section class="card parts-card" aria-label="部材一覧">
+      <details id="partsDetails">
+        <summary id="partsSummary">部材一覧を見る</summary>
+        <div id="partsList" class="parts-list" aria-label="使用部材一覧"></div>
+      </details>
     </section>
 
     <section class="card reply-card" aria-labelledby="replyTitle">
@@ -114,6 +101,14 @@
       <input id="shareUrl" class="share-url" type="text" readonly aria-label="共有URL">
       <button id="shareButton" class="ghost-button full-button" type="button">共有URLをコピー</button>
       <p id="shareStatus" class="copy-status" role="status" aria-live="polite"></p>
+    </section>
+
+    <section class="card notice-card" aria-labelledby="noticeTitle">
+      <div class="section-head">
+        <h2 id="noticeTitle">注意事項</h2>
+      </div>
+      <div id="noticeList" class="notice-list"></div>
+      <p class="notice">表示価格はアメリカンフェンス材料のみの概算価格です。人工芝、基礎工事、フェンス設置費、その他施工費は含まれていません。</p>
     </section>
   </main>
 

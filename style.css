@@ -85,9 +85,8 @@ h2 {
 
 .summary-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-  margin: 4px 0 16px;
+  grid-template-columns: 1fr;
+  margin: 16px 0 0;
 }
 
 .total-card,
@@ -100,7 +99,6 @@ h2 {
 }
 
 .total-card {
-  grid-column: 1 / -1;
   padding: 20px 18px 22px;
   border-color: #b9dccb;
   background: linear-gradient(180deg, #f7fffa, #e7f6ee);
@@ -114,7 +112,7 @@ h2 {
 }
 
 .total-card span {
-  font-size: 17px;
+  font-size: 18px;
 }
 
 .total-card strong {
@@ -122,7 +120,7 @@ h2 {
   margin-top: 8px;
   color: var(--accent-dark);
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: clamp(48px, 15vw, 70px);
+  font-size: clamp(50px, 15vw, 72px);
   line-height: 0.98;
   letter-spacing: 0;
   word-break: keep-all;
@@ -692,6 +690,46 @@ h2 {
 .parts-list {
   display: grid;
   gap: 10px;
+  margin-top: 14px;
+}
+
+.parts-card details {
+  display: grid;
+  gap: 12px;
+}
+
+.parts-card summary {
+  min-height: 52px;
+  list-style: none;
+  border: 2px solid var(--line);
+  border-radius: 12px;
+  background: #ffffff;
+  color: var(--accent-dark);
+  padding: 13px 44px 13px 14px;
+  font-size: 16px;
+  font-weight: 900;
+  line-height: 1.35;
+  cursor: pointer;
+  position: relative;
+}
+
+.parts-card summary::-webkit-details-marker {
+  display: none;
+}
+
+.parts-card summary::after {
+  content: "+";
+  position: absolute;
+  top: 50%;
+  right: 15px;
+  transform: translateY(-50%);
+  color: var(--accent);
+  font-size: 24px;
+  line-height: 1;
+}
+
+.parts-card details[open] summary::after {
+  content: "-";
 }
 
 .part-card {
@@ -719,10 +757,18 @@ h2 {
   line-height: 1.35;
 }
 
+.parts-gate-note {
+  color: var(--accent-dark);
+}
+
 .part-values {
   display: grid;
   grid-template-columns: 0.68fr 1fr 1fr;
   gap: 8px;
+}
+
+.customer-part-values {
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1fr);
 }
 
 .part-values span {
@@ -753,6 +799,10 @@ h2 {
   font-size: 14px;
   font-weight: 800;
   line-height: 1.6;
+}
+
+.notice-list:empty + .notice {
+  margin-top: 0;
 }
 
 .reply-card textarea {
