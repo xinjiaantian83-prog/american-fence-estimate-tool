@@ -105,6 +105,13 @@
       <div id="selectedSegmentDetail" class="selected-segment-detail"></div>
     </section>
 
+    <section class="card parts-card" aria-label="部材一覧">
+      <details id="partsDetails">
+        <summary id="partsSummary">部材一覧を見る</summary>
+        <div id="partsList" class="parts-list" aria-label="使用部材一覧"></div>
+      </details>
+    </section>
+
     <section class="summary-grid" aria-label="価格">
       <article class="total-card">
         <span>材料一式（税込）</span>
@@ -115,7 +122,7 @@
     <section class="card order-flow-card" aria-labelledby="orderFlowTitle">
       <div class="section-head order-flow-head">
         <h2 id="orderFlowTitle">ご注文の流れ</h2>
-        <p>こちらの商品は受注発注です。内容・配送を確認後、お支払いをお願いしております。</p>
+        <p>内容・配送を確認後、お支払いをお願いしております。</p>
       </div>
       <ol class="order-flow-list">
         <li>
@@ -164,13 +171,6 @@
         <button id="shippingButton" class="ghost-button full-button" type="button">送料・配送方法を確認する</button>
         <p id="shippingStatus" class="copy-status" role="status" aria-live="polite"></p>
       </div>
-    </section>
-
-    <section class="card parts-card" aria-label="部材一覧">
-      <details id="partsDetails">
-        <summary id="partsSummary">部材一覧を見る</summary>
-        <div id="partsList" class="parts-list" aria-label="使用部材一覧"></div>
-      </details>
     </section>
 
     <section class="card reply-card" aria-labelledby="replyTitle">
