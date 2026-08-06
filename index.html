@@ -13,7 +13,65 @@
       <p>材料販売価格をすばやく回答する内部ツール</p>
     </header>
 
-    <section class="summary-grid" aria-label="見積結果">
+    <section class="card input-card" aria-labelledby="inputTitle">
+      <div class="section-head">
+        <h2 id="inputTitle">入力</h2>
+      </div>
+
+      <fieldset class="shape-picker">
+        <legend>平面形状</legend>
+        <button class="shape-button" type="button" data-shape="line">
+          <span class="shape-icon shape-line" aria-hidden="true"></span>
+          <strong>直線</strong>
+        </button>
+        <button class="shape-button" type="button" data-shape="l">
+          <span class="shape-icon shape-l" aria-hidden="true"></span>
+          <strong>L字</strong>
+        </button>
+        <button class="shape-button" type="button" data-shape="u">
+          <span class="shape-icon shape-u" aria-hidden="true"></span>
+          <strong>コの字</strong>
+        </button>
+        <button class="shape-button" type="button" data-shape="box">
+          <span class="shape-icon shape-box" aria-hidden="true"></span>
+          <strong>四角</strong>
+        </button>
+      </fieldset>
+
+      <div id="segmentInputs" class="segment-inputs" aria-label="各辺の入力"></div>
+
+      <button id="resetButton" class="ghost-button full-button" type="button">リセット</button>
+    </section>
+
+    <section class="card drawing-card" aria-labelledby="drawingTitle">
+      <div class="section-head">
+        <h2 id="drawingTitle">図面</h2>
+      </div>
+      <div id="drawingCanvas" class="drawing-canvas" aria-label="フェンス配置図"></div>
+      <div class="drawing-legend" aria-label="図面凡例">
+        <span><i class="legend-post"></i>柱</span>
+        <span><i class="legend-panel900"></i>900</span>
+        <span><i class="legend-panel1500"></i>1500</span>
+        <span><i class="legend-gate"></i>門扉</span>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="dimensionsTitle">
+      <div class="section-head">
+        <h2 id="dimensionsTitle">選択中の辺の構成</h2>
+      </div>
+      <div id="selectedSegmentDetail" class="selected-segment-detail"></div>
+    </section>
+
+    <section class="card" aria-labelledby="partsTitle">
+      <div class="section-head">
+        <h2 id="partsTitle">部材一覧</h2>
+      </div>
+      <div id="partsList" class="parts-list" aria-label="使用部材一覧"></div>
+      <p class="notice">表示価格はアメリカンフェンス材料のみの概算価格です。人工芝、基礎工事、フェンス設置費、その他施工費は含まれていません。</p>
+    </section>
+
+    <section class="summary-grid" aria-label="価格">
       <article class="total-card">
         <span>税込価格</span>
         <strong id="customerTotalTaxIn">¥0</strong>
@@ -30,101 +88,37 @@
         <span>粗利率</span>
         <strong id="profitRate">0.0%</strong>
       </article>
-    </section>
-
-    <section class="card input-card" aria-labelledby="inputTitle">
-      <div class="section-head">
-        <h2 id="inputTitle">入力</h2>
-      </div>
-
-      <fieldset class="shape-picker">
-        <legend>平面形状</legend>
-        <button class="shape-button" type="button" data-shape="line">
-          <span class="shape-icon shape-line" aria-hidden="true"></span>
-          <strong>直線</strong>
-        </button>
-        <button class="shape-button" type="button" data-shape="u">
-          <span class="shape-icon shape-u" aria-hidden="true"></span>
-          <strong>コの字</strong>
-        </button>
-        <button class="shape-button" type="button" data-shape="box">
-          <span class="shape-icon shape-box" aria-hidden="true"></span>
-          <strong>四角</strong>
-        </button>
-      </fieldset>
-
-      <div class="quantity-list">
-        <label class="quantity-row" for="panel1500">
-          <span class="quantity-label">
-            <strong>1500×900パネル</strong>
-            <small>通常フェンスパネル</small>
-          </span>
-          <span class="stepper">
-            <button type="button" data-step-target="panel1500" data-step="-1" aria-label="1500×900パネルを減らす">−</button>
-            <input id="panel1500" type="number" inputmode="numeric" min="0" step="1">
-            <button type="button" data-step-target="panel1500" data-step="1" aria-label="1500×900パネルを増やす">＋</button>
-          </span>
-        </label>
-
-        <label class="quantity-row" for="panel900">
-          <span class="quantity-label">
-            <strong>通常900×900パネル</strong>
-            <small>門扉用パネルは含めない</small>
-          </span>
-          <span class="stepper">
-            <button type="button" data-step-target="panel900" data-step="-1" aria-label="通常900×900パネルを減らす">−</button>
-            <input id="panel900" type="number" inputmode="numeric" min="0" step="1">
-            <button type="button" data-step-target="panel900" data-step="1" aria-label="通常900×900パネルを増やす">＋</button>
-          </span>
-        </label>
-
-        <label class="quantity-row" for="gates">
-          <span class="quantity-label">
-            <strong>片開き門扉</strong>
-            <small>1個につき900×900を1枚追加</small>
-          </span>
-          <span class="stepper">
-            <button type="button" data-step-target="gates" data-step="-1" aria-label="片開き門扉を減らす">−</button>
-            <input id="gates" type="number" inputmode="numeric" min="0" step="1">
-            <button type="button" data-step-target="gates" data-step="1" aria-label="片開き門扉を増やす">＋</button>
-          </span>
-        </label>
-      </div>
-
-      <button id="resetButton" class="ghost-button full-button" type="button">リセット</button>
-    </section>
-
-    <section class="sub-metrics" aria-label="詳細金額">
       <article class="metric-card">
-        <span>定価合計・税別</span>
+        <span>定価合計</span>
         <strong id="listTotal">0円</strong>
       </article>
       <article class="metric-card">
-        <span>仕入合計・税別</span>
+        <span>仕入合計</span>
         <strong id="costTotal">0円</strong>
       </article>
     </section>
 
-    <section class="card" aria-labelledby="partsTitle">
-      <div class="section-head">
-        <h2 id="partsTitle">使用部材</h2>
-      </div>
-
-      <div id="partsList" class="parts-list" aria-label="使用部材一覧"></div>
-
-      <p class="notice">表示価格はアメリカンフェンス材料のみの概算価格です。人工芝、基礎工事、フェンス設置費、その他施工費は含まれていません。</p>
-    </section>
-
     <section class="card reply-card" aria-labelledby="replyTitle">
       <div class="section-head">
-        <h2 id="replyTitle">返信文</h2>
+        <h2 id="replyTitle">LINE相談</h2>
       </div>
       <textarea id="replyText" readonly></textarea>
       <button id="copyButton" class="primary-button full-button" type="button">コピー</button>
       <p id="copyStatus" class="copy-status" role="status" aria-live="polite"></p>
     </section>
+
+    <section class="card share-card" aria-labelledby="shareTitle">
+      <div class="section-head">
+        <h2 id="shareTitle">URL共有</h2>
+      </div>
+      <input id="shareUrl" class="share-url" type="text" readonly aria-label="共有URL">
+      <button id="shareButton" class="ghost-button full-button" type="button">共有URLをコピー</button>
+      <p id="shareStatus" class="copy-status" role="status" aria-live="polite"></p>
+    </section>
   </main>
 
+  <script src="fence-engine.js"></script>
+  <script src="url-state.js"></script>
   <script src="script.js"></script>
 </body>
 </html>
