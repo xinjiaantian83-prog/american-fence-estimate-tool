@@ -43,8 +43,7 @@ const elements = {
   shareUrl: $("shareUrl"),
   shareButton: $("shareButton"),
   shareStatus: $("shareStatus"),
-  resetButton: $("resetButton"),
-  stickyLineButton: $("stickyLineButton")
+  resetButton: $("resetButton")
 };
 
 let state = loadState();
@@ -1019,10 +1018,6 @@ function setupInputs() {
     }
   });
 
-  elements.stickyLineButton.addEventListener("click", async () => {
-    document.querySelector(".reply-card").scrollIntoView({ behavior: "smooth", block: "center" });
-    await copyReply();
-  });
 }
 
 async function copyReply() {
