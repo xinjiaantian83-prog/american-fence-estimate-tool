@@ -70,6 +70,14 @@ function createDefaultSegment(id) {
   };
 }
 
+function createEmptySegment(id) {
+  return {
+    ...createDefaultSegment(id),
+    mode: "manual",
+    targetMm: 0
+  };
+}
+
 function yen(value) {
   return `${Math.round(value).toLocaleString("ja-JP")}円`;
 }
@@ -526,7 +534,7 @@ function updateShape(shape) {
   state.shape = shape;
   state.segments = Array.from({ length: count }, (_, index) => {
     const id = getSegmentId(index);
-    return currentById.get(id) || createDefaultSegment(id);
+    return currentById.get(id) || createEmptySegment(id);
   });
   state.selectedSegmentId = state.segments[0].id;
   render();
@@ -585,6 +593,40 @@ function buildRawDrawingLines(drawing) {
     };
     cursor = { ...line.end };
     return line;
+  });
+}
+
+function buildDisplayDrawingLines(layout) {
+  const rawLines = buildRawDrawingLines(layout.drawing);
+  const actualSpans = rawLines.map((line) => line.spanMm).filter((spanMm) => spanMm > 0);
+  const targetSpans = layout.segments
+    .map((segment) => Number(segment.targetMm))
+    .filter((targetMm) => Number.isFinite(targetMm) && targetMm > 0);
+  const placeholderSpan = Math.max(1055, ...actualSpans, ...targetSpans);
+  let cursor = { x: 0, y: 0 };
+
+  return rawLines.map((line) => {
+    const placeholder = line.spanMm <= 0;
+    const spanMm = placeholder ? placeholderSpan : line.spanMm;
+    const segment = placeholder
+      ? {
+        ...line.segment,
+        dimensionLabel: "未入力"
+      }
+      : line.segment;
+    const displayLine = {
+      ...line,
+      segment,
+      start: { ...cursor },
+      end: {
+        x: cursor.x + line.vector.x * spanMm,
+        y: cursor.y + line.vector.y * spanMm
+      },
+      spanMm,
+      placeholder
+    };
+    cursor = { ...displayLine.end };
+    return displayLine;
   });
 }
 
@@ -783,6 +825,32 @@ function drawFenceSegment(svg, line, selected, postMap, drawingStyle) {
   drawDimension(svg, line, segment, drawingStyle);
 }
 
+function drawPlaceholderSegment(svg, line, selected, drawingStyle) {
+  const className = selected ? "svg-placeholder-segment is-selected" : "svg-placeholder-segment";
+  svg.appendChild(createSvgElement("line", {
+    x1: line.start.x,
+    y1: line.start.y,
+    x2: line.end.x,
+    y2: line.end.y,
+    class: className,
+    fill: "none",
+    "data-drawing-segment": line.segment.id
+  }));
+
+  const hit = createSvgElement("line", {
+    x1: line.start.x,
+    y1: line.start.y,
+    x2: line.end.x,
+    y2: line.end.y,
+    class: "svg-segment-hit",
+    fill: "none",
+    "data-drawing-segment": line.segment.id
+  });
+  svg.appendChild(hit);
+
+  drawDimension(svg, line, line.segment, drawingStyle);
+}
+
 function getDrawingViewport(lines) {
   const bounds = getRawBounds(lines);
   const bodyPadding = Math.max(700, Math.max(bounds.maxX - bounds.minX, bounds.maxY - bounds.minY) * 0.18);
@@ -816,8 +884,8 @@ function getDrawingViewport(lines) {
 }
 
 function renderDrawing(layout) {
-  const rawLines = buildRawDrawingLines(layout.drawing);
-  const viewport = getDrawingViewport(rawLines);
+  const displayLines = buildDisplayDrawingLines(layout);
+  const viewport = getDrawingViewport(displayLines);
   const svg = createSvgElement("svg", {
     viewBox: `${viewport.minX} ${viewport.minY} ${viewport.width} ${viewport.height}`,
     role: "img",
@@ -833,24 +901,16 @@ function renderDrawing(layout) {
     class: "svg-paper"
   }));
 
-  if (layout.totals.actualMm === 0) {
-    appendText(
-      svg,
-      "各辺の寸法または枚数を入力してください",
-      viewport.minX + viewport.width / 2,
-      viewport.minY + viewport.height / 2,
-      "svg-empty",
-      "middle",
-      null,
-      `font-size:${viewport.style.fontSize}px`
-    );
-  } else {
-    const postMap = new Map();
-    rawLines.forEach((rawLine) => {
-      drawFenceSegment(svg, rawLine, rawLine.segment.id === state.selectedSegmentId, postMap, viewport.style);
-    });
-    drawPosts(svg, postMap, viewport.style);
-  }
+  const postMap = new Map();
+  displayLines.forEach((line) => {
+    const selected = line.segment.id === state.selectedSegmentId;
+    if (line.placeholder) {
+      drawPlaceholderSegment(svg, line, selected, viewport.style);
+    } else {
+      drawFenceSegment(svg, line, selected, postMap, viewport.style);
+    }
+  });
+  drawPosts(svg, postMap, viewport.style);
 
   elements.drawingCanvas.replaceChildren(svg);
 }

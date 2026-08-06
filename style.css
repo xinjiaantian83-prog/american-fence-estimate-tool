@@ -748,6 +748,22 @@ h2 {
   stroke-width: 6px;
 }
 
+.svg-placeholder-segment {
+  cursor: pointer;
+  fill: none;
+  stroke: #a8b0aa;
+  stroke-dasharray: 10 8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2px;
+  vector-effect: non-scaling-stroke;
+}
+
+.svg-placeholder-segment.is-selected {
+  stroke: #59655e;
+  stroke-width: 3px;
+}
+
 .svg-dimension-text,
 .svg-empty {
   fill: var(--text);
