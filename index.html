@@ -9,7 +9,9 @@
 <body>
   <main class="app">
     <header class="hero">
-      <div class="hero-media" aria-hidden="true"></div>
+      <div class="image-frame hero-media" data-fallback="No Image" aria-hidden="true">
+        <img src="images/hero.jpg" srcset="images/hero-900.jpg 900w, images/hero-1600.jpg 1600w, images/hero.jpg 1800w" sizes="100vw" alt="" decoding="async" fetchpriority="high">
+      </div>
       <div class="hero-content">
         <h1><span>アメリカンフェンス</span><span>全国販売</span></h1>
         <p>必要部材・設置寸法・価格まで<br>約30秒で自動見積もり</p>
@@ -17,6 +19,38 @@
         <button id="startEstimateButton" class="hero-button" type="button">見積もりを始める</button>
       </div>
     </header>
+
+    <section class="case-section" aria-labelledby="caseTitle">
+      <div class="section-head compact-head">
+        <h2 id="caseTitle">施工事例</h2>
+      </div>
+      <div class="case-scroller" aria-label="施工事例一覧">
+        <button class="case-card" type="button" data-case-title="ドッグラン" data-case-image="images/dogrun.jpg" data-case-srcset="images/dogrun-640.jpg 640w, images/dogrun.jpg 1800w">
+          <span class="image-frame case-image" data-fallback="No Image">
+            <img src="images/dogrun-640.jpg" srcset="images/dogrun-640.jpg 640w, images/dogrun.jpg 1800w" sizes="(max-width: 760px) 72vw, 260px" alt="ドッグランの施工事例" loading="lazy" decoding="async">
+          </span>
+          <strong>ドッグラン</strong>
+        </button>
+        <button class="case-card" type="button" data-case-title="ガレージ" data-case-image="images/garage.jpg" data-case-srcset="images/garage-640.jpg 640w, images/garage.jpg 1800w">
+          <span class="image-frame case-image" data-fallback="No Image">
+            <img src="images/garage-640.jpg" srcset="images/garage-640.jpg 640w, images/garage.jpg 1800w" sizes="(max-width: 760px) 72vw, 260px" alt="ガレージの施工事例" loading="lazy" decoding="async">
+          </span>
+          <strong>ガレージ</strong>
+        </button>
+        <button class="case-card" type="button" data-case-title="庭囲い" data-case-image="images/garden.jpg" data-case-srcset="images/garden-640.jpg 640w, images/garden.jpg 1800w">
+          <span class="image-frame case-image" data-fallback="No Image">
+            <img src="images/garden-640.jpg" srcset="images/garden-640.jpg 640w, images/garden.jpg 1800w" sizes="(max-width: 760px) 72vw, 260px" alt="庭囲いの施工事例" loading="lazy" decoding="async">
+          </span>
+          <strong>庭囲い</strong>
+        </button>
+        <button class="case-card" type="button" data-case-title="店舗" data-case-image="images/shop.jpg" data-case-srcset="images/shop-640.jpg 640w, images/shop.jpg 1800w">
+          <span class="image-frame case-image" data-fallback="No Image">
+            <img src="images/shop-640.jpg" srcset="images/shop-640.jpg 640w, images/shop.jpg 1800w" sizes="(max-width: 760px) 72vw, 260px" alt="店舗の施工事例" loading="lazy" decoding="async">
+          </span>
+          <strong>店舗</strong>
+        </button>
+      </div>
+    </section>
 
     <section id="estimateInput" class="card input-card" aria-labelledby="inputTitle">
       <div class="section-head">
@@ -143,6 +177,16 @@
         <input id="shippingConfirmed" type="checkbox">
         <span>内容を確認しました</span>
       </label>
+    </div>
+  </div>
+
+  <div id="caseModal" class="modal-backdrop image-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="caseModalTitle" hidden>
+    <div class="modal-panel image-modal-panel">
+      <button id="closeCaseModal" class="modal-close" type="button" aria-label="閉じる">×</button>
+      <h2 id="caseModalTitle">施工事例</h2>
+      <div class="image-frame modal-image-frame" data-fallback="No Image">
+        <img id="caseModalImage" src="images/dogrun.jpg" sizes="(max-width: 760px) 92vw, 860px" alt="" loading="lazy" decoding="async">
+      </div>
     </div>
   </div>
 

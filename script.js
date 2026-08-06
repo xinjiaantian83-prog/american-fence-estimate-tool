@@ -34,6 +34,10 @@ const elements = {
   shippingModal: $("shippingModal"),
   closeShippingModal: $("closeShippingModal"),
   shippingConfirmed: $("shippingConfirmed"),
+  caseModal: $("caseModal"),
+  closeCaseModal: $("closeCaseModal"),
+  caseModalTitle: $("caseModalTitle"),
+  caseModalImage: $("caseModalImage"),
   partsSummary: $("partsSummary"),
   partsList: $("partsList"),
   noticeList: $("noticeList"),
@@ -1016,8 +1020,47 @@ function setupInputs() {
       elements.shippingModal.hidden = true;
       elements.shippingButton.focus();
     }
+    if (event.key === "Escape" && !elements.caseModal.hidden) {
+      elements.caseModal.hidden = true;
+    }
   });
 
+}
+
+function setupImages() {
+  document.querySelectorAll(".image-frame img").forEach((image) => {
+    image.addEventListener("error", () => {
+      image.closest(".image-frame")?.classList.add("is-missing");
+    });
+    image.addEventListener("load", () => {
+      image.closest(".image-frame")?.classList.remove("is-missing");
+    });
+    if (image.complete && image.naturalWidth === 0) {
+      image.closest(".image-frame")?.classList.add("is-missing");
+    }
+  });
+
+  document.querySelectorAll(".case-card").forEach((card) => {
+    card.addEventListener("click", () => {
+      elements.caseModalTitle.textContent = card.dataset.caseTitle || "施工事例";
+      elements.caseModalImage.srcset = card.dataset.caseSrcset || "";
+      elements.caseModalImage.src = card.dataset.caseImage || "";
+      elements.caseModalImage.alt = `${elements.caseModalTitle.textContent}の施工事例`;
+      elements.caseModalImage.closest(".image-frame")?.classList.remove("is-missing");
+      elements.caseModal.hidden = false;
+      elements.closeCaseModal.focus();
+    });
+  });
+
+  elements.closeCaseModal.addEventListener("click", () => {
+    elements.caseModal.hidden = true;
+  });
+
+  elements.caseModal.addEventListener("click", (event) => {
+    if (event.target === elements.caseModal) {
+      elements.caseModal.hidden = true;
+    }
+  });
 }
 
 async function copyReply() {
@@ -1047,6 +1090,7 @@ async function copyShareUrl() {
 }
 
 setupInputs();
+setupImages();
 elements.copyButton.addEventListener("click", copyReply);
 elements.shareButton.addEventListener("click", copyShareUrl);
 window.addEventListener("popstate", () => {
