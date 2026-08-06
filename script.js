@@ -28,8 +28,12 @@ const elements = {
   drawingCanvas: $("drawingCanvas"),
   selectedSegmentDetail: $("selectedSegmentDetail"),
   customerTotalTaxIn: $("customerTotalTaxIn"),
+  startEstimateButton: $("startEstimateButton"),
   shippingButton: $("shippingButton"),
   shippingStatus: $("shippingStatus"),
+  shippingModal: $("shippingModal"),
+  closeShippingModal: $("closeShippingModal"),
+  shippingConfirmed: $("shippingConfirmed"),
   partsSummary: $("partsSummary"),
   partsList: $("partsList"),
   noticeList: $("noticeList"),
@@ -39,7 +43,8 @@ const elements = {
   shareUrl: $("shareUrl"),
   shareButton: $("shareButton"),
   shareStatus: $("shareStatus"),
-  resetButton: $("resetButton")
+  resetButton: $("resetButton"),
+  stickyLineButton: $("stickyLineButton")
 };
 
 let state = loadState();
@@ -968,6 +973,10 @@ function render() {
 }
 
 function setupInputs() {
+  elements.startEstimateButton.addEventListener("click", () => {
+    document.getElementById("estimateInput").scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+
   document.querySelectorAll("[data-shape]").forEach((button) => {
     button.addEventListener("click", () => updateShape(button.dataset.shape));
   });
@@ -986,7 +995,33 @@ function setupInputs() {
   });
 
   elements.shippingButton.addEventListener("click", () => {
-    elements.shippingStatus.textContent = "送料・配送方法は設置地域と荷受け条件により変わります。LINE相談で確認してください。";
+    elements.shippingStatus.textContent = "";
+    elements.shippingModal.hidden = false;
+    elements.shippingConfirmed.focus();
+  });
+
+  elements.closeShippingModal.addEventListener("click", () => {
+    elements.shippingModal.hidden = true;
+    elements.shippingButton.focus();
+  });
+
+  elements.shippingModal.addEventListener("click", (event) => {
+    if (event.target === elements.shippingModal) {
+      elements.shippingModal.hidden = true;
+      elements.shippingButton.focus();
+    }
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !elements.shippingModal.hidden) {
+      elements.shippingModal.hidden = true;
+      elements.shippingButton.focus();
+    }
+  });
+
+  elements.stickyLineButton.addEventListener("click", async () => {
+    document.querySelector(".reply-card").scrollIntoView({ behavior: "smooth", block: "center" });
+    await copyReply();
   });
 }
 
