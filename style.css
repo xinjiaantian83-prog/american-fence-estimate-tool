@@ -805,6 +805,36 @@ h2 {
   height: auto;
 }
 
+.opposite-dimension-notice {
+  margin-top: 10px;
+}
+
+.opposite-dimension-notice:empty {
+  display: none;
+}
+
+.opposite-dimension-box {
+  display: grid;
+  gap: 6px;
+  border: 1px solid #ead9a5;
+  border-radius: 14px;
+  background: #fff8df;
+  padding: 12px;
+  color: #5d4a19;
+}
+
+.opposite-dimension-box strong {
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.opposite-dimension-box p {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.6;
+}
+
 .svg-paper {
   fill: #ffffff;
   stroke: #dfe5e1;

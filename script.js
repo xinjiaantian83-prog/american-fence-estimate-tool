@@ -28,6 +28,7 @@ const elements = {
   segmentApply: $("segmentApply"),
   segmentInputs: $("segmentInputs"),
   drawingCanvas: $("drawingCanvas"),
+  oppositeDimensionNotice: $("oppositeDimensionNotice"),
   selectedSegmentDetail: $("selectedSegmentDetail"),
   customerTotalTaxIn: $("customerTotalTaxIn"),
   startEstimateButton: $("startEstimateButton"),
@@ -1039,6 +1040,43 @@ function renderDrawing(layout) {
   elements.drawingCanvas.replaceChildren(svg);
 }
 
+function getOppositeSegmentPairs(shape) {
+  if (shape === "box") return [["A", "C"], ["B", "D"]];
+  if (shape === "u") return [["A", "C"]];
+  return [];
+}
+
+function getOppositeDimensionDifferences(layout) {
+  const segmentById = new Map(layout.segments.map((segment) => [segment.id, segment]));
+  return getOppositeSegmentPairs(layout.shape).reduce((items, pair) => {
+    const first = segmentById.get(pair[0]);
+    const second = segmentById.get(pair[1]);
+    if (!first || !second || first.actualMm <= 0 || second.actualMm <= 0) return items;
+    const differenceMm = Math.abs(first.actualMm - second.actualMm);
+    if (differenceMm <= 0) return items;
+    items.push({ firstId: pair[0], secondId: pair[1], differenceMm });
+    return items;
+  }, []);
+}
+
+function renderOppositeDimensionNotice(layout) {
+  if (!elements.oppositeDimensionNotice) return;
+  const differences = getOppositeDimensionDifferences(layout);
+  if (!differences.length) {
+    elements.oppositeDimensionNotice.innerHTML = "";
+    return;
+  }
+
+  elements.oppositeDimensionNotice.innerHTML = `
+    <div class="opposite-dimension-box">
+      <strong>設置寸法について</strong>
+      ${differences.map((item) => `
+        <p>対面する${item.firstId}辺と${item.secondId}辺で、設置寸法に約${item.differenceMm.toLocaleString("ja-JP")}mmの差があります。<br>既存の土間・塀・建物などに沿わせて設置する場合は、寸法をご確認ください。</p>
+      `).join("")}
+    </div>
+  `;
+}
+
 function renderSelectedSegmentDetail(layout) {
   const segment = layout.segments.find((item) => item.id === state.selectedSegmentId) || layout.segments[0];
   if (!segment) {
@@ -1163,6 +1201,7 @@ function render() {
   renderSegmentApply(layout);
   renderSegmentInputs(layout);
   renderDrawing(layout);
+  renderOppositeDimensionNotice(layout);
   renderSelectedSegmentDetail(layout);
   renderParts(layout);
   renderPrice(price);
