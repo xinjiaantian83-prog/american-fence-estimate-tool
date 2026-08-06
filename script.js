@@ -371,16 +371,17 @@ function renderGateControls(segment, panelCount) {
         <input type="checkbox" data-segment="${segment.id}" data-field="gateEnabled"${segment.gateEnabled ? " checked" : ""}>
         <span>門扉を付ける</span>
       </label>
-      <div class="gate-grid${segment.gateEnabled ? "" : " is-disabled"}">
+      ${segment.gateEnabled ? `
+      <div class="gate-grid">
         <label class="field-row">
           <span>門扉の種類</span>
-          <select data-segment="${segment.id}" data-field="gateSku"${segment.gateEnabled ? "" : " disabled"}>
+          <select data-segment="${segment.id}" data-field="gateSku">
             <option value="standard900"${segment.gateSku === "standard900" ? " selected" : ""}>片開き門扉 900</option>
           </select>
         </label>
         <label class="field-row">
           <span>門扉位置</span>
-          <select data-segment="${segment.id}" data-field="gatePositionPreset"${segment.gateEnabled ? "" : " disabled"}>
+          <select data-segment="${segment.id}" data-field="gatePositionPreset">
             <option value="left"${segment.gatePositionPreset === "left" ? " selected" : ""}>左端</option>
             <option value="center"${segment.gatePositionPreset === "center" ? " selected" : ""}>中央付近</option>
             <option value="right"${segment.gatePositionPreset === "right" ? " selected" : ""}>右端</option>
@@ -389,27 +390,40 @@ function renderGateControls(segment, panelCount) {
         </label>
         <label class="field-row gate-custom-position${customClass}">
           <span>区画番号 0〜${maxPosition}</span>
-          <input type="number" inputmode="numeric" min="0" step="1" value="${segment.gatePosition}" data-segment="${segment.id}" data-field="gatePosition"${segment.gateEnabled ? "" : " disabled"}>
+          <input type="number" inputmode="numeric" min="0" step="1" value="${segment.gatePosition}" data-segment="${segment.id}" data-field="gatePosition">
         </label>
       </div>
+      ` : ""}
     </div>
   `;
 }
 
-function renderSegmentInputs() {
+function formatSegmentSummary(segment) {
+  if (!segment || segment.actualMm <= 0) return "未入力";
+  const parts = segment.panels.map((panel) => `${panel.sku === "ST2-OAMF09" ? "900" : "1500"}×${panel.qty}`);
+  if (segment.gates.length) parts.push(`門扉×${segment.gates.length}`);
+  return `約${segment.actualMm.toLocaleString("ja-JP")}mm${parts.length ? ` ・ ${parts.join(" + ")}` : ""}`;
+}
+
+function renderSegmentInputs(layout) {
   elements.segmentInputs.innerHTML = state.segments.map((segment) => {
+    const estimatedSegment = layout.segments.find((item) => item.id === segment.id);
     const small = getProposal(segment, "small");
     const large = getProposal(segment, "large");
     const selectedProposal = segment.adoptedProposal === "small" ? small : large;
     const proposalPanelCount = selectedProposal ? selectedProposal.panelCount : 0;
     const manualPanelCount = getManualPanelCount(segment);
     const active = segment.id === state.selectedSegmentId ? " is-selected" : "";
+    const open = segment.id === state.selectedSegmentId;
+    const complete = estimatedSegment && estimatedSegment.actualMm > 0;
     return `
-      <article class="segment-input-card${active}" data-segment-card="${segment.id}">
-        <div class="segment-input-head">
-          <h3>${segment.id}辺</h3>
+      <article class="segment-input-card${active}${open ? " is-open" : ""}" data-segment-card="${segment.id}">
+        <button class="segment-input-head" type="button" aria-expanded="${open}" aria-controls="segment-panel-${segment.id}">
+          <h3>${complete ? "✓ " : ""}${segment.id}辺</h3>
+          <small>${formatSegmentSummary(estimatedSegment)}</small>
           <span>${segment.mode === "auto" ? "希望寸法から提案" : "パネル枚数を指定"}</span>
-        </div>
+        </button>
+        <div id="segment-panel-${segment.id}" class="segment-input-body"${open ? "" : " hidden"}>
         <label class="field-row">
           <span>入力方法</span>
           <select data-segment="${segment.id}" data-field="mode">
@@ -436,11 +450,6 @@ function renderSegmentInputs() {
             </label>
           </div>
         ` : `
-          <label class="field-row">
-            <span>希望寸法 mm</span>
-            <input type="number" inputmode="numeric" min="1" step="1" value="${segment.targetMm}" data-segment="${segment.id}" data-field="targetMm">
-          </label>
-          ${renderGateControls(segment, manualPanelCount)}
           <div class="manual-grid">
             <label class="field-row">
               <span>900パネル 数量</span>
@@ -451,7 +460,9 @@ function renderSegmentInputs() {
               <input type="number" inputmode="numeric" min="0" step="1" value="${getPanelQty(segment, "ST2-OAMF15")}" data-segment="${segment.id}" data-field="panel1500">
             </label>
           </div>
+          ${renderGateControls(segment, manualPanelCount)}
         `}
+        </div>
       </article>
     `;
   }).join("");
@@ -964,7 +975,7 @@ function render() {
   const price = calculatePrice(layout);
 
   syncShapeButtons();
-  renderSegmentInputs();
+  renderSegmentInputs(layout);
   renderDrawing(layout);
   renderSelectedSegmentDetail(layout);
   renderParts(layout);
