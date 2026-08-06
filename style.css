@@ -403,6 +403,76 @@ h2 {
   gap: 8px;
 }
 
+.segment-nav {
+  display: grid;
+  place-items: center;
+  min-height: 108px;
+  margin: 10px 0 8px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #fbfcfa;
+}
+
+.segment-nav svg {
+  display: block;
+  width: min(100%, 360px);
+  height: 112px;
+}
+
+.segment-nav-item {
+  cursor: pointer;
+  outline: none;
+}
+
+.segment-nav-line {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 4px;
+  vector-effect: non-scaling-stroke;
+}
+
+.segment-nav-line.is-empty {
+  stroke: #b8c0bb;
+  stroke-dasharray: 7 6;
+}
+
+.segment-nav-line.is-complete {
+  stroke: #6aa27d;
+}
+
+.segment-nav-line.is-selected {
+  stroke: var(--accent-dark);
+  stroke-width: 7px;
+  stroke-dasharray: none;
+}
+
+.segment-nav-hit {
+  fill: none;
+  stroke: rgba(0, 0, 0, 0.01);
+  stroke-linecap: round;
+  stroke-width: 28px;
+  vector-effect: non-scaling-stroke;
+}
+
+.segment-nav-label {
+  fill: #6f7973;
+  font-size: 16px;
+  font-weight: 900;
+  text-anchor: middle;
+  dominant-baseline: middle;
+  pointer-events: none;
+}
+
+.segment-nav-label.is-selected {
+  fill: var(--accent-dark);
+}
+
+.segment-nav-item:focus-visible .segment-nav-line {
+  stroke: var(--accent-dark);
+  stroke-width: 7px;
+}
+
 .segment-input-card {
   display: grid;
   gap: 10px;

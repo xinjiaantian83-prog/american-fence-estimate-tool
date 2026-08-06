@@ -24,6 +24,7 @@ const fenceEngine = window.AmericanFenceEngine;
 const $ = (id) => document.getElementById(id);
 
 const elements = {
+  segmentNav: $("segmentNav"),
   segmentInputs: $("segmentInputs"),
   drawingCanvas: $("drawingCanvas"),
   selectedSegmentDetail: $("selectedSegmentDetail"),
@@ -413,6 +414,59 @@ function formatSegmentSummary(segment) {
   return `約${segment.actualMm.toLocaleString("ja-JP")}mm${parts.length ? ` ・ ${parts.join(" + ")}` : ""}`;
 }
 
+function getSegmentNavGeometry(shape) {
+  const geometries = {
+    line: [
+      { id: "A", x1: 28, y1: 54, x2: 152, y2: 54, labelX: 90, labelY: 37 }
+    ],
+    l: [
+      { id: "A", x1: 42, y1: 34, x2: 126, y2: 34, labelX: 84, labelY: 18 },
+      { id: "B", x1: 126, y1: 34, x2: 126, y2: 82, labelX: 143, labelY: 60 }
+    ],
+    u: [
+      { id: "A", x1: 42, y1: 30, x2: 138, y2: 30, labelX: 90, labelY: 15 },
+      { id: "B", x1: 138, y1: 30, x2: 138, y2: 78, labelX: 154, labelY: 55 },
+      { id: "C", x1: 138, y1: 78, x2: 42, y2: 78, labelX: 90, labelY: 98 }
+    ],
+    box: [
+      { id: "A", x1: 42, y1: 26, x2: 138, y2: 26, labelX: 90, labelY: 12 },
+      { id: "B", x1: 138, y1: 26, x2: 138, y2: 82, labelX: 154, labelY: 56 },
+      { id: "C", x1: 138, y1: 82, x2: 42, y2: 82, labelX: 90, labelY: 100 },
+      { id: "D", x1: 42, y1: 82, x2: 42, y2: 26, labelX: 26, labelY: 56 }
+    ]
+  };
+  return geometries[shape] || geometries.line;
+}
+
+function renderSegmentNav(layout) {
+  if (!elements.segmentNav) return;
+  const segmentById = new Map(layout.segments.map((segment) => [segment.id, segment]));
+  const lines = getSegmentNavGeometry(state.shape);
+  const lineMarkup = lines.map((line) => {
+    const segment = segmentById.get(line.id);
+    const complete = segment && segment.actualMm > 0;
+    const selected = line.id === state.selectedSegmentId;
+    const className = [
+      "segment-nav-line",
+      complete ? "is-complete" : "is-empty",
+      selected ? "is-selected" : ""
+    ].join(" ");
+    return `
+      <g class="segment-nav-item" data-nav-segment="${line.id}" role="button" tabindex="0" aria-label="${line.id}辺を入力">
+        <line class="${className}" x1="${line.x1}" y1="${line.y1}" x2="${line.x2}" y2="${line.y2}"></line>
+        <line class="segment-nav-hit" x1="${line.x1}" y1="${line.y1}" x2="${line.x2}" y2="${line.y2}"></line>
+        <text class="segment-nav-label${selected ? " is-selected" : ""}" x="${line.labelX}" y="${line.labelY}">${line.id}</text>
+      </g>
+    `;
+  }).join("");
+
+  elements.segmentNav.innerHTML = `
+    <svg viewBox="0 0 180 108" role="img" aria-label="入力する辺の位置">
+      ${lineMarkup}
+    </svg>
+  `;
+}
+
 function renderSegmentInputs(layout) {
   elements.segmentInputs.innerHTML = state.segments.map((segment) => {
     const estimatedSegment = layout.segments.find((item) => item.id === segment.id);
@@ -526,6 +580,20 @@ function handleSegmentClick(event) {
   if (event.target.closest("[data-field]")) return;
   const card = event.target.closest("[data-segment-card]");
   if (card) selectSegment(card.dataset.segmentCard);
+}
+
+function handleSegmentNavClick(event) {
+  const item = event.target.closest("[data-nav-segment]");
+  if (!item) return;
+  selectSegment(item.dataset.navSegment);
+}
+
+function handleSegmentNavKeydown(event) {
+  if (event.key !== "Enter" && event.key !== " ") return;
+  const item = event.target.closest("[data-nav-segment]");
+  if (!item) return;
+  event.preventDefault();
+  selectSegment(item.dataset.navSegment);
 }
 
 function updateShape(shape) {
@@ -1035,6 +1103,7 @@ function render() {
   const price = calculatePrice(layout);
 
   syncShapeButtons();
+  renderSegmentNav(layout);
   renderSegmentInputs(layout);
   renderDrawing(layout);
   renderSelectedSegmentDetail(layout);
@@ -1055,6 +1124,10 @@ function setupInputs() {
     button.addEventListener("click", () => updateShape(button.dataset.shape));
   });
 
+  if (elements.segmentNav) {
+    elements.segmentNav.addEventListener("click", handleSegmentNavClick);
+    elements.segmentNav.addEventListener("keydown", handleSegmentNavKeydown);
+  }
   elements.segmentInputs.addEventListener("input", handleSegmentInput);
   elements.segmentInputs.addEventListener("change", handleSegmentInput);
   elements.segmentInputs.addEventListener("click", handleSegmentClick);
