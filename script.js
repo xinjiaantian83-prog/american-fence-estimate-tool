@@ -19,8 +19,8 @@ const INITIAL_STATE = {
 const STORAGE_KEY = "americanFenceEstimateState_v2";
 const TAX_RATE = 0.1;
 const CUSTOMER_RATE = 0.8;
-const LINE_URL = "";
-const CONTACT_EMAIL = "";
+const LINE_URL = "https://lin.ee/sQNwZUv";
+const CONTACT_EMAIL = "xinjiaantian83@gmail.com";
 const urlState = window.AmericanFenceUrlState;
 const fenceEngine = window.AmericanFenceEngine;
 const $ = (id) => document.getElementById(id);
@@ -1298,11 +1298,27 @@ function getEstimateUrl() {
   return window.location.href;
 }
 
-function getInquiryMessage(price) {
+function getLineInquiryMessage(price) {
+  return [
+    "【アメリカンフェンス全国販売】",
+    "",
+    "アメリカンフェンスの見積もりについて相談したいです。",
+    "",
+    `見積金額：${yenMark(price.customerTotalTaxIn)}（税込・送料込）`,
+    "",
+    "見積URL：",
+    getEstimateUrl(),
+    "",
+    "よろしくお願いします。"
+  ].join("\n");
+}
+
+function getEmailInquiryMessage(price) {
   return [
     "アメリカンフェンスの見積もりについて相談したいです。",
     "",
     `見積金額：${yenMark(price.customerTotalTaxIn)}（税込・送料込）`,
+    "",
     "見積URL：",
     getEstimateUrl(),
     "",
@@ -1313,6 +1329,7 @@ function getInquiryMessage(price) {
 function buildLineUrl(message) {
   const baseUrl = LINE_URL.trim();
   if (!baseUrl) return "";
+  if (/^https:\/\/lin\.ee\//.test(baseUrl)) return baseUrl;
   const encodedMessage = encodeURIComponent(message);
   if (baseUrl.includes("{message}")) return baseUrl.replace("{message}", encodedMessage);
   const separator = baseUrl.includes("?") ? "&" : "?";
@@ -1327,23 +1344,28 @@ function buildEmailUrl(message) {
   return `mailto:${encodeURIComponent(email)}?subject=${subject}&body=${body}`;
 }
 
-function setInquiryButtonState(button, href, disabledLabel) {
+function setInquiryButtonState(button, href, disabledLabel, message = "", copyOnClick = false) {
   if (!button) return;
   if (href) {
     button.href = href;
     button.removeAttribute("aria-disabled");
     button.dataset.disabledReason = "";
+    button.dataset.inquiryMessage = message;
+    button.dataset.copyOnClick = copyOnClick ? "true" : "";
     return;
   }
   button.href = "#";
   button.setAttribute("aria-disabled", "true");
   button.dataset.disabledReason = disabledLabel;
+  button.dataset.inquiryMessage = "";
+  button.dataset.copyOnClick = "";
 }
 
 function renderInquiry(price) {
-  const message = getInquiryMessage(price);
-  setInquiryButtonState(elements.lineInquiryButton, buildLineUrl(message), "LINEの送信先が未設定です。");
-  setInquiryButtonState(elements.emailInquiryButton, buildEmailUrl(message), "メールアドレスが未設定です。");
+  const lineMessage = getLineInquiryMessage(price);
+  const emailMessage = getEmailInquiryMessage(price);
+  setInquiryButtonState(elements.lineInquiryButton, buildLineUrl(lineMessage), "LINEの送信先が未設定です。", lineMessage, true);
+  setInquiryButtonState(elements.emailInquiryButton, buildEmailUrl(emailMessage), "メールアドレスが未設定です。", emailMessage, false);
 }
 
 function render() {
@@ -1478,6 +1500,18 @@ async function copyShareUrl() {
 function handleInquiryClick(event) {
   const reason = event.currentTarget.dataset.disabledReason;
   if (!reason) {
+    const shouldCopy = event.currentTarget.dataset.copyOnClick === "true";
+    const message = event.currentTarget.dataset.inquiryMessage || "";
+    if (shouldCopy && message && navigator.clipboard) {
+      navigator.clipboard.writeText(message)
+        .then(() => {
+          elements.inquiryStatus.textContent = "見積文章をコピーしました。LINEで貼り付けて送信してください。";
+        })
+        .catch(() => {
+          elements.inquiryStatus.textContent = "LINEが開きます。見積URLはURL共有からコピーできます。";
+        });
+      return;
+    }
     elements.inquiryStatus.textContent = "";
     return;
   }
