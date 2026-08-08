@@ -55,6 +55,9 @@ const elements = {
 
 let state = loadState();
 let segmentApplyMessage = "";
+const DEFERRED_NUMERIC_FIELDS = new Set(["targetMm", "panel900", "panel1500", "gatePosition"]);
+const pendingNumericEdits = new Map();
+let deferredRenderTimer = null;
 
 function createDefaultSegment(id) {
   return {
@@ -147,6 +150,13 @@ function normalizeGates(gates) {
     .filter((gate) => gate.position >= 0);
 }
 
+function normalizeTargetMm(segment) {
+  if (segment && Object.prototype.hasOwnProperty.call(segment, "targetMm")) {
+    return sanitizeDimension(segment.targetMm);
+  }
+  return 3000;
+}
+
 function sanitizeGatePositionPreset(value) {
   return ["left", "center", "right", "custom"].includes(value) ? value : "left";
 }
@@ -158,7 +168,7 @@ function normalizeSegment(segment, index) {
   return {
     id,
     mode: segment && segment.mode === "manual" ? "manual" : "auto",
-    targetMm: sanitizeDimension(segment && segment.targetMm) || 3000,
+    targetMm: normalizeTargetMm(segment),
     adoptedProposal: segment && segment.adoptedProposal === "small" ? "small" : "large",
     panels: normalizePanels(segment && segment.panels),
     gateEnabled: Boolean((segment && segment.gateEnabled) || gates.length > 0),
@@ -242,6 +252,27 @@ function getPanelQty(segment, sku) {
 function setPanelQty(segment, sku, qty) {
   const panel = segment.panels.find((item) => item.sku === sku);
   if (panel) panel.qty = sanitizeCount(qty);
+}
+
+function getNumericEditKey(segmentId, field) {
+  return `${segmentId}:${field}`;
+}
+
+function isDeferredNumericControl(control) {
+  return control
+    && control.tagName === "INPUT"
+    && control.type === "number"
+    && DEFERRED_NUMERIC_FIELDS.has(control.dataset.field);
+}
+
+function getNumericInputValue(segment, field) {
+  const key = getNumericEditKey(segment.id, field);
+  if (pendingNumericEdits.has(key)) return pendingNumericEdits.get(key);
+  if (field === "targetMm") return segment.targetMm > 0 ? String(segment.targetMm) : "";
+  if (field === "panel900") return String(getPanelQty(segment, "ST2-OAMF09"));
+  if (field === "panel1500") return String(getPanelQty(segment, "ST2-OAMF15"));
+  if (field === "gatePosition") return String(segment.gatePosition || 0);
+  return "";
 }
 
 function getManualPanelCount(segment) {
@@ -402,7 +433,7 @@ function renderGateControls(segment, panelCount) {
         </label>
         <label class="field-row gate-custom-position${customClass}">
           <span>区画番号 0〜${maxPosition}</span>
-          <input type="number" inputmode="numeric" min="0" step="1" value="${segment.gatePosition}" data-segment="${segment.id}" data-field="gatePosition">
+          <input type="number" inputmode="numeric" min="0" step="1" value="${escapeHtml(getNumericInputValue(segment, "gatePosition"))}" data-segment="${segment.id}" data-field="gatePosition">
         </label>
       </div>
       ` : ""}
@@ -545,7 +576,7 @@ function renderSegmentInputs(layout) {
         ${segment.mode === "auto" ? `
           <label class="field-row">
             <span>希望寸法 mm</span>
-            <input type="number" inputmode="numeric" min="1" step="1" value="${segment.targetMm}" data-segment="${segment.id}" data-field="targetMm">
+            <input type="number" inputmode="numeric" min="1" step="1" value="${escapeHtml(getNumericInputValue(segment, "targetMm"))}" data-segment="${segment.id}" data-field="targetMm">
           </label>
           ${renderGateControls(segment, proposalPanelCount)}
           <div class="proposal-grid">
@@ -564,11 +595,11 @@ function renderSegmentInputs(layout) {
           <div class="manual-grid">
             <label class="field-row">
               <span>900パネル 数量</span>
-              <input type="number" inputmode="numeric" min="0" step="1" value="${getPanelQty(segment, "ST2-OAMF09")}" data-segment="${segment.id}" data-field="panel900">
+              <input type="number" inputmode="numeric" min="0" step="1" value="${escapeHtml(getNumericInputValue(segment, "panel900"))}" data-segment="${segment.id}" data-field="panel900">
             </label>
             <label class="field-row">
               <span>1500パネル 数量</span>
-              <input type="number" inputmode="numeric" min="0" step="1" value="${getPanelQty(segment, "ST2-OAMF15")}" data-segment="${segment.id}" data-field="panel1500">
+              <input type="number" inputmode="numeric" min="0" step="1" value="${escapeHtml(getNumericInputValue(segment, "panel1500"))}" data-segment="${segment.id}" data-field="panel1500">
             </label>
           </div>
           ${renderGateControls(segment, manualPanelCount)}
@@ -581,11 +612,13 @@ function renderSegmentInputs(layout) {
 
 function selectSegment(segmentId) {
   if (!state.segments.some((segment) => segment.id === segmentId)) return;
+  commitActiveNumericEdit(false);
+  commitPendingNumericEditsForSegment(state.selectedSegmentId, false);
   state.selectedSegmentId = segmentId;
   render();
 }
 
-function updateSegmentField(segmentId, field, value) {
+function updateSegmentField(segmentId, field, value, shouldRender = true) {
   const segment = state.segments.find((item) => item.id === segmentId);
   if (!segment) return;
   segmentApplyMessage = "";
@@ -616,14 +649,77 @@ function updateSegmentField(segmentId, field, value) {
   }
 
   state.selectedSegmentId = segmentId;
-  render();
+  if (shouldRender) render();
+}
+
+function commitNumericControl(control, shouldRender = true) {
+  if (!isDeferredNumericControl(control)) return false;
+  const { segment, field } = control.dataset;
+  pendingNumericEdits.delete(getNumericEditKey(segment, field));
+  updateSegmentField(segment, field, control.value, shouldRender);
+  return true;
+}
+
+function commitActiveNumericEdit(shouldRender = true) {
+  const active = document.activeElement;
+  if (!active || !elements.segmentInputs.contains(active)) return false;
+  return commitNumericControl(active, shouldRender);
+}
+
+function commitPendingNumericEditsForSegment(segmentId, shouldRender = true) {
+  let committed = false;
+  Array.from(pendingNumericEdits.entries()).forEach(([key, value]) => {
+    const [pendingSegmentId, field] = key.split(":");
+    if (pendingSegmentId !== segmentId) return;
+    pendingNumericEdits.delete(key);
+    updateSegmentField(pendingSegmentId, field, value, false);
+    committed = true;
+  });
+  if (committed && shouldRender) render();
+  return committed;
+}
+
+function scheduleDeferredRender() {
+  if (deferredRenderTimer) window.clearTimeout(deferredRenderTimer);
+  deferredRenderTimer = window.setTimeout(() => {
+    deferredRenderTimer = null;
+    render();
+  }, 120);
 }
 
 function handleSegmentInput(event) {
   const control = event.target.closest("[data-segment][data-field]");
   if (!control) return;
+  if (event.type === "input" && isDeferredNumericControl(control)) {
+    pendingNumericEdits.set(getNumericEditKey(control.dataset.segment, control.dataset.field), control.value);
+    return;
+  }
+  if (isDeferredNumericControl(control)) {
+    commitNumericControl(control, false);
+    scheduleDeferredRender();
+    return;
+  }
+  if (control.dataset.field === "mode") {
+    commitPendingNumericEditsForSegment(control.dataset.segment, false);
+  }
   const value = control.type === "checkbox" ? control.checked : control.value;
   updateSegmentField(control.dataset.segment, control.dataset.field, value);
+}
+
+function handleSegmentInputBlur(event) {
+  const control = event.target.closest("[data-segment][data-field]");
+  if (!isDeferredNumericControl(control)) return;
+  commitNumericControl(control, false);
+  scheduleDeferredRender();
+}
+
+function handleSegmentInputKeydown(event) {
+  if (event.key !== "Enter") return;
+  const control = event.target.closest("[data-segment][data-field]");
+  if (!isDeferredNumericControl(control)) return;
+  event.preventDefault();
+  commitNumericControl(control);
+  control.blur();
 }
 
 function handleSegmentClick(event) {
@@ -635,6 +731,7 @@ function handleSegmentClick(event) {
 function handleSegmentNavClick(event) {
   const item = event.target.closest("[data-nav-segment]");
   if (!item) return;
+  commitActiveNumericEdit(false);
   selectSegment(item.dataset.navSegment);
 }
 
@@ -653,6 +750,8 @@ function handleSegmentApplyClick(event) {
 }
 
 function updateShape(shape) {
+  commitActiveNumericEdit(false);
+  commitPendingNumericEditsForSegment(state.selectedSegmentId, false);
   const currentById = new Map(state.segments.map((segment) => [segment.id, segment]));
   const count = getShapeSegmentCount(shape);
   segmentApplyMessage = "";
@@ -1240,6 +1339,8 @@ function setupInputs() {
   }
   elements.segmentInputs.addEventListener("input", handleSegmentInput);
   elements.segmentInputs.addEventListener("change", handleSegmentInput);
+  elements.segmentInputs.addEventListener("focusout", handleSegmentInputBlur);
+  elements.segmentInputs.addEventListener("keydown", handleSegmentInputKeydown);
   elements.segmentInputs.addEventListener("click", handleSegmentClick);
   elements.drawingCanvas.addEventListener("click", (event) => {
     const line = event.target.closest("[data-drawing-segment]");
