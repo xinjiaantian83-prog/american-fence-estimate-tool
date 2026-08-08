@@ -173,13 +173,14 @@
       </div>
     </section>
 
-    <section class="card reply-card" aria-labelledby="replyTitle">
+    <section class="card reply-card inquiry-card" aria-labelledby="replyTitle">
       <div class="section-head">
-        <h2 id="replyTitle">LINE相談</h2>
+        <h2 id="replyTitle">お問い合わせ</h2>
       </div>
-      <textarea id="replyText" readonly></textarea>
-      <button id="copyButton" class="primary-button full-button" type="button">コピー</button>
-      <p id="copyStatus" class="copy-status" role="status" aria-live="polite"></p>
+      <p class="inquiry-note">見積内容は自動で引き継がれます。</p>
+      <a id="lineInquiryButton" class="primary-button full-button inquiry-button" href="#" target="_blank" rel="noopener">この見積内容でLINE相談する</a>
+      <a id="emailInquiryButton" class="ghost-button full-button inquiry-button inquiry-button-secondary" href="#">メールで問い合わせる</a>
+      <p id="inquiryStatus" class="copy-status" role="status" aria-live="polite"></p>
     </section>
 
     <section class="card share-card" aria-labelledby="shareTitle">

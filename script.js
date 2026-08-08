@@ -19,6 +19,8 @@ const INITIAL_STATE = {
 const STORAGE_KEY = "americanFenceEstimateState_v2";
 const TAX_RATE = 0.1;
 const CUSTOMER_RATE = 0.8;
+const LINE_URL = "";
+const CONTACT_EMAIL = "";
 const urlState = window.AmericanFenceUrlState;
 const fenceEngine = window.AmericanFenceEngine;
 const $ = (id) => document.getElementById(id);
@@ -44,9 +46,9 @@ const elements = {
   partsSummary: $("partsSummary"),
   partsList: $("partsList"),
   noticeList: $("noticeList"),
-  replyText: $("replyText"),
-  copyButton: $("copyButton"),
-  copyStatus: $("copyStatus"),
+  lineInquiryButton: $("lineInquiryButton"),
+  emailInquiryButton: $("emailInquiryButton"),
+  inquiryStatus: $("inquiryStatus"),
   shareUrl: $("shareUrl"),
   shareButton: $("shareButton"),
   shareStatus: $("shareStatus"),
@@ -1292,14 +1294,56 @@ function renderNotices(layout) {
   `;
 }
 
-function renderReply(price) {
-  elements.replyText.value = [
-    "お問い合わせありがとうございます。",
-    `こちらの仕様ですと、アメリカンフェンス材料一式で税込${yen(price.customerTotalTaxIn)}になります。`,
+function getEstimateUrl() {
+  return window.location.href;
+}
+
+function getInquiryMessage(price) {
+  return [
+    "アメリカンフェンスの見積もりについて相談したいです。",
     "",
-    "表示価格は材料のみの価格です。",
-    "人工芝、基礎工事、アメリカンフェンスの設置費用は含まれておりません。"
+    `見積金額：${yenMark(price.customerTotalTaxIn)}（税込・送料込）`,
+    "見積URL：",
+    getEstimateUrl(),
+    "",
+    "よろしくお願いします。"
   ].join("\n");
+}
+
+function buildLineUrl(message) {
+  const baseUrl = LINE_URL.trim();
+  if (!baseUrl) return "";
+  const encodedMessage = encodeURIComponent(message);
+  if (baseUrl.includes("{message}")) return baseUrl.replace("{message}", encodedMessage);
+  const separator = baseUrl.includes("?") ? "&" : "?";
+  return `${baseUrl}${separator}text=${encodedMessage}`;
+}
+
+function buildEmailUrl(message) {
+  const email = CONTACT_EMAIL.trim();
+  if (!email) return "";
+  const subject = encodeURIComponent("アメリカンフェンス 見積もり問い合わせ");
+  const body = encodeURIComponent(message);
+  return `mailto:${encodeURIComponent(email)}?subject=${subject}&body=${body}`;
+}
+
+function setInquiryButtonState(button, href, disabledLabel) {
+  if (!button) return;
+  if (href) {
+    button.href = href;
+    button.removeAttribute("aria-disabled");
+    button.dataset.disabledReason = "";
+    return;
+  }
+  button.href = "#";
+  button.setAttribute("aria-disabled", "true");
+  button.dataset.disabledReason = disabledLabel;
+}
+
+function renderInquiry(price) {
+  const message = getInquiryMessage(price);
+  setInquiryButtonState(elements.lineInquiryButton, buildLineUrl(message), "LINEの送信先が未設定です。");
+  setInquiryButtonState(elements.emailInquiryButton, buildEmailUrl(message), "メールアドレスが未設定です。");
 }
 
 function render() {
@@ -1316,9 +1360,9 @@ function render() {
   renderParts(layout);
   renderPrice(price);
   renderNotices(layout);
-  renderReply(price);
   saveState();
   elements.shareUrl.value = window.location.href;
+  renderInquiry(price);
 }
 
 function setupInputs() {
@@ -1418,19 +1462,6 @@ function setupImages() {
   });
 }
 
-async function copyReply() {
-  elements.copyStatus.textContent = "";
-
-  try {
-    await navigator.clipboard.writeText(elements.replyText.value);
-    elements.copyStatus.textContent = "コピーしました。";
-  } catch {
-    elements.replyText.focus();
-    elements.replyText.select();
-    elements.copyStatus.textContent = "コピーできませんでした。返信文を選択したので手動でコピーしてください。";
-  }
-}
-
 async function copyShareUrl() {
   elements.shareStatus.textContent = "";
 
@@ -1444,9 +1475,20 @@ async function copyShareUrl() {
   }
 }
 
+function handleInquiryClick(event) {
+  const reason = event.currentTarget.dataset.disabledReason;
+  if (!reason) {
+    elements.inquiryStatus.textContent = "";
+    return;
+  }
+  event.preventDefault();
+  elements.inquiryStatus.textContent = reason;
+}
+
 setupInputs();
 setupImages();
-elements.copyButton.addEventListener("click", copyReply);
+elements.lineInquiryButton.addEventListener("click", handleInquiryClick);
+elements.emailInquiryButton.addEventListener("click", handleInquiryClick);
 elements.shareButton.addEventListener("click", copyShareUrl);
 window.addEventListener("popstate", () => {
   state = loadState();

@@ -725,7 +725,7 @@ h2 {
 }
 
 .stepper input:focus,
-.reply-card textarea:focus,
+.inquiry-button:focus,
 .field-row input:focus,
 .field-row select:focus,
 .share-url:focus {
@@ -840,6 +840,19 @@ h2 {
   border: 0;
   background: var(--accent);
   color: #ffffff;
+}
+
+.inquiry-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  text-decoration: none;
+}
+
+.inquiry-button[aria-disabled="true"] {
+  opacity: 0.56;
+  cursor: not-allowed;
 }
 
 .input-card {
@@ -1252,17 +1265,16 @@ h2 {
   margin-top: 0;
 }
 
-.reply-card textarea {
-  width: 100%;
-  min-height: 178px;
-  resize: vertical;
-  border: 2px solid var(--line);
-  border-radius: 18px;
-  background: #ffffff;
-  color: var(--text);
-  padding: 13px;
+.inquiry-note {
+  margin: 0 0 6px;
+  color: var(--muted);
   font-size: 16px;
-  line-height: 1.65;
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+.inquiry-button-secondary {
+  margin-top: 10px;
 }
 
 .copy-status {
