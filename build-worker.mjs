@@ -11,7 +11,8 @@ const textFiles = {
   "/style.css": { source: "style.css", contentType: "text/css; charset=utf-8" },
   "/fence-engine.js": { source: "fence-engine.js", contentType: "application/javascript; charset=utf-8" },
   "/url-state.js": { source: "url-state.js", contentType: "application/javascript; charset=utf-8" },
-  "/script.js": { source: "script.js", contentType: "application/javascript; charset=utf-8" }
+  "/script.js": { source: "script.js", contentType: "application/javascript; charset=utf-8" },
+  "/script-inquiry.js": { source: "script-inquiry.js", contentType: "application/javascript; charset=utf-8" }
 };
 
 const imageFiles = [
