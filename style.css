@@ -1370,6 +1370,21 @@ h2 {
   margin-bottom: 18px;
 }
 
+.line-paste-panel {
+  padding-top: 30px;
+}
+
+.line-paste-message {
+  margin: 0 0 18px;
+  color: var(--muted);
+  line-height: 1.75;
+}
+
+.modal-actions {
+  display: grid;
+  gap: 10px;
+}
+
 .image-modal-backdrop {
   place-items: center;
 }

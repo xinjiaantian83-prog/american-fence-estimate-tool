@@ -49,6 +49,12 @@ const elements = {
   lineInquiryButton: $("lineInquiryButton"),
   emailInquiryButton: $("emailInquiryButton"),
   inquiryStatus: $("inquiryStatus"),
+  linePasteModal: $("linePasteModal"),
+  closeLinePasteModal: $("closeLinePasteModal"),
+  cancelLinePasteModal: $("cancelLinePasteModal"),
+  linePasteTitle: $("linePasteTitle"),
+  linePasteMessage: $("linePasteMessage"),
+  openLineButton: $("openLineButton"),
   shareUrl: $("shareUrl"),
   shareButton: $("shareButton"),
   shareStatus: $("shareStatus"),
@@ -1368,6 +1374,21 @@ function renderInquiry(price) {
   setInquiryButtonState(elements.emailInquiryButton, buildEmailUrl(emailMessage), "メールアドレスが未設定です。", emailMessage, false);
 }
 
+function openLinePasteModal({ copied, lineUrl }) {
+  elements.linePasteTitle.textContent = copied ? "見積内容をコピーしました" : "自動コピーできませんでした";
+  elements.linePasteMessage.textContent = copied
+    ? "LINEのトーク画面で、入力欄を長押しして「ペースト」してください。"
+    : "見積URLをコピーしてLINEからお問い合わせください。";
+  elements.openLineButton.href = lineUrl || LINE_URL;
+  elements.linePasteModal.hidden = false;
+  elements.openLineButton.focus();
+}
+
+function closeLinePasteModal() {
+  elements.linePasteModal.hidden = true;
+  elements.lineInquiryButton.focus();
+}
+
 function render() {
   const layout = calculateLayout();
   const price = calculatePrice(layout);
@@ -1436,10 +1457,21 @@ function setupInputs() {
     }
   });
 
+  elements.closeLinePasteModal.addEventListener("click", closeLinePasteModal);
+  elements.cancelLinePasteModal.addEventListener("click", closeLinePasteModal);
+  elements.linePasteModal.addEventListener("click", (event) => {
+    if (event.target === elements.linePasteModal) {
+      closeLinePasteModal();
+    }
+  });
+
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && !elements.shippingModal.hidden) {
       elements.shippingModal.hidden = true;
       elements.shippingButton.focus();
+    }
+    if (event.key === "Escape" && !elements.linePasteModal.hidden) {
+      closeLinePasteModal();
     }
     if (event.key === "Escape" && !elements.caseModal.hidden) {
       elements.caseModal.hidden = true;
@@ -1502,14 +1534,20 @@ function handleInquiryClick(event) {
   if (!reason) {
     const shouldCopy = event.currentTarget.dataset.copyOnClick === "true";
     const message = event.currentTarget.dataset.inquiryMessage || "";
-    if (shouldCopy && message && navigator.clipboard) {
-      navigator.clipboard.writeText(message)
-        .then(() => {
-          elements.inquiryStatus.textContent = "見積文章をコピーしました。LINEで貼り付けて送信してください。";
-        })
-        .catch(() => {
-          elements.inquiryStatus.textContent = "LINEが開きます。見積URLはURL共有からコピーできます。";
-        });
+    if (shouldCopy) {
+      event.preventDefault();
+      elements.inquiryStatus.textContent = "";
+      if (message && navigator.clipboard) {
+        navigator.clipboard.writeText(message)
+          .then(() => {
+            openLinePasteModal({ copied: true, lineUrl: event.currentTarget.href });
+          })
+          .catch(() => {
+            openLinePasteModal({ copied: false, lineUrl: event.currentTarget.href });
+          });
+        return;
+      }
+      openLinePasteModal({ copied: false, lineUrl: event.currentTarget.href });
       return;
     }
     elements.inquiryStatus.textContent = "";

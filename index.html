@@ -229,6 +229,18 @@
     </div>
   </div>
 
+  <div id="linePasteModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="linePasteTitle" hidden>
+    <div class="modal-panel line-paste-panel">
+      <button id="closeLinePasteModal" class="modal-close" type="button" aria-label="閉じる">×</button>
+      <h2 id="linePasteTitle">見積内容をコピーしました</h2>
+      <p id="linePasteMessage" class="line-paste-message">LINEのトーク画面で、入力欄を長押しして「ペースト」してください。</p>
+      <div class="modal-actions">
+        <a id="openLineButton" class="primary-button full-button" href="https://lin.ee/sQNwZUv" target="_blank" rel="noopener">LINEを開く</a>
+        <button id="cancelLinePasteModal" class="ghost-button full-button" type="button">キャンセル</button>
+      </div>
+    </div>
+  </div>
+
   <div id="caseModal" class="modal-backdrop image-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="caseModalTitle" hidden>
     <div class="modal-panel image-modal-panel">
       <button id="closeCaseModal" class="modal-close" type="button" aria-label="閉じる">×</button>
